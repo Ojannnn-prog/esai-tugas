@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // Hashed password
+  name      String   @default("Administrator")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Exam {
+  id              String       @id @default(cuid())
+  title           String
+  subject         String?
+  description     String?      @db.Text
+  questionContent String       @db.Text
+  durationMinutes Int          @default(60) // Minimal 60 menit
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  submissions     Submission[]
+}
+
+model Submission {
+  id           String    @id @default(cuid())
+  examId       String
+  exam         Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentName  String
+  studentClass String
+  essayAnswer  String    @db.Text // Teks esai lengkap (HTML / formatted)
+  startedAt    DateTime  @default(now())
+  submittedAt  DateTime  @default(now())
+  isExpired    Boolean   @default(false) // Auto-submit saat waktu habis
+  
+  // Penilaian Admin
+  score        Float?    // Nilai (0 - 100)
+  feedback     String?   @db.Text // Masukan/evaluasi guru
+  gradedAt     DateTime?
+  isPublished  Boolean   @default(false) // Ditampilkan di dashboard pengumuman publik
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([examId])
+  @@index([studentName])
+  @@index([studentClass])
+  @@index([isPublished])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
